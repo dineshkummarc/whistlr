@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
+  <version>v0.0.1 (alpha)</version>
+	<url>http://cloud.github.com/downloads/gdakram/whistlr/whistlr.air</url>
+  <description><![CDATA[
+	v0.0.1 (alpha)
+  * The very first version of the whistlr!
+	* 3 last.fm charts available:
+	  a. Recently played tracks
+	  b. Weekly top artists
+	  c. Weekly top tracks
+  ]]></description>
+</update>
