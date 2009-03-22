@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:comp="com.gdakram.display.*" 
+	width="99%" height="34" creationComplete="{init(event)}">
+	<mx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;			
+			import mx.controls.Alert;
+			import com.gdakram.events.StatusMessageEvent;
+			
+			/**
+			 * Creation complete handler
+			 */
+			public function init(event:Event):void {
+				this.parentApplication.addEventListener(StatusMessageEvent.UPDATE_STATUS, updateStatus);
+			}
+			
+			/**
+			 * Method updates the status box with the appropriate message 
+			 * when a StatusMessageEvent is captured.
+			 */
+			private function updateStatus(event:StatusMessageEvent):void {
+				/* 
+				if (statusUpdateEffect.isPlaying) {
+					statusUpdateEffect.stop();
+				}
+				statusUpdateEffect.play([appStatusBox]);
+				*/				
+				appStatusBox.visible = true;
+				appStatusBox.text = event.message;
+				setTimeout(fadeStatus,3000);
+			}
+			
+			/**
+			 * Method called as a timeout and fades the status box 
+			 */
+			private function fadeStatus():void {
+				appStatusBox.visible = false;
+				/*
+				if (!statusFadeEffect.isPlaying) {
+					statusFadeEffect.play([appStatusBox]);	
+				}
+				*/
+			}
+			
+		]]>
+	</mx:Script>
+
+	<!-- The animation sequence for showing the status message -->
+	<mx:Parallel id="statusUpdateEffect">
+		<mx:children>
+			<mx:WipeRight duration="500"/>
+		</mx:children>
+	</mx:Parallel>
+	
+	<!-- The animation sequence for hiding the status message -->
+	<mx:Parallel id="statusFadeEffect">
+		<mx:children>
+			<mx:Fade duration="1000" alphaFrom="100" alphaTo="0"/>
+		</mx:children>
+	</mx:Parallel>
+	
+	<!-- The UI Layout -->
+	<mx:Label id="appStatusBox" left="10" top="8" color="#F4F9FA"/>
+	<comp:LocaleComboBox right="7" bottom="7"/>
+		
+</mx:Canvas>

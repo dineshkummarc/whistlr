@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init(event)">
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import com.gdakram.utils.TrakzUrlShortener;
+			import com.gdakram.utils.IsGdUrlShortener;
+			import com.gdakram.conf.CPreferencesManager;
+			import com.gdakram.events.*;
+			import mx.controls.Alert;
+			import mx.managers.CursorManager;
+			import mx.utils.Base64Encoder;
+			import com.gdakram.conf.Twitter;
+			
+			/**
+			 * Event handler when the canvas has been initialized
+			 */
+			private function init(event:Event):void {
+				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false));
+				this.parentApplication.addEventListener(TweetEvent.POPULATE_TWEET_BOX,populateTweetBox);
+			}
+			
+			/**
+			 * Called when the URL shorten button is clicked
+			 */
+			private function shortenUrl(event:MouseEvent):void {
+				if (urlBox.text.match(/^http:\/\/.+?$/) == null) {
+					this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString("resources", "INVALID_URL_MSG")));
+				} 
+				else {
+					var trakzUrlShortener:TrakzUrlShortener = new TrakzUrlShortener(urlBox.text);
+					trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, urlShortened);
+					trakzUrlShortener.addEventListener(StatusMessageEvent.UPDATE_STATUS, dispatchUrlShorteningEvents);
+					trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENING_ERROR, isgdUrlShortenerHandler);
+					trakzUrlShortener.shorten();
+					CursorManager.setBusyCursor();
+				}
+				
+			}
+
+			/**
+			 * A backup shortener in case tra.kz bails
+			 */ 
+			private function isgdUrlShortenerHandler(event:UrlShortenerEvent):void {
+				var isgdUrlShortener:IsGdUrlShortener = new IsGdUrlShortener(urlBox.text);
+				isgdUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, urlShortened);
+				isgdUrlShortener.shorten();
+				CursorManager.setBusyCursor();
+			}
+			
+			/**
+			 *	Status Message Event handler for URL shortener 
+			 */
+			private function dispatchUrlShorteningEvents(event:StatusMessageEvent):void {
+				this.dispatchEvent(event);
+				CursorManager.removeAllCursors();
+			}
+			
+			/**
+			 * Event handler when a URL has been successfully shortened
+			 */
+			private function urlShortened(event:UrlShortenerEvent):void {
+				tweetBox.text = tweetBox.text + " " + event.url;
+				urlBox.text = "";
+				CursorManager.removeAllCursors();
+			}
+			
+			private function populateTweetBox(event:TweetEvent):void {
+				tweetBox.text = event.tweet;
+				CursorManager.removeAllCursors();
+			}
+			
+			/**
+			 * Checks and ensures a tweet doesn't exceed 140 characters
+			 */
+			private function characterCountCheck(event:Event):void {
+				characterCountLabel.text = (140 - tweetBox.text.length).toString();
+				tweetButton.enabled = (tweetBox.text.length > 140) ? false : true;
+				if (tweetBox.text.length > 140) {
+					characterCountLabel.setStyle("color","#800000");
+					tweetButton.enabled = false;
+				} else {
+					characterCountLabel.setStyle("color","#55290B");
+					tweetButton.enabled = true;
+				}
+			}
+			
+			/**
+			 *	Tweets to twitter
+			 */
+			private function tweet(event:MouseEvent):void {
+				var status:String = tweetBox.text;
+				var encoder:Base64Encoder = new Base64Encoder();
+				encoder.insertNewLines = false;
+				encoder.encode(CPreferencesManager.getPreference('loginCred').twitterUsername + ":" + CPreferencesManager.getPreference('loginCred').twitterPassword);
+				tweetService.headers["Authorization"] = "Basic " + encoder.toString();
+				tweetService.send({"status" : status, "source" : "Whistler"});	
+			}
+			
+			/**
+			 * Successful tweet response callback from twitter
+			 */
+			private function tweetResult(event:ResultEvent):void {
+				//var result:String = event.result.toString();
+				tweetBox.text = "";
+				this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString("resources", "TWEETED_MSG")));
+			}
+			
+			/**
+			 * Failed tweet response callback from twitter (or not)
+			 */
+			private function tweetFault(event:FaultEvent):void {
+				this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString("resources", "TWEET_ERROR_MSG")));				
+			}
+		]]>
+	</mx:Script>
+
+	<!-- The twitter posting service -->
+	<mx:HTTPService id="tweetService" method="POST"
+		url="{Twitter.TWEET_POST_URL}" 
+		result="{tweetResult(event)}" fault="{tweetFault(event)}" 
+		showBusyCursor="true">
+		<mx:request>
+			<suppress_response_codes>true</suppress_response_codes>
+		</mx:request>		
+	</mx:HTTPService>
+	
+	<mx:VBox top="10" left="10" width="100%">
+		<!-- Tweet Box UI -->	
+		<mx:Label id="tweetBoxLabel" text="{resourceManager.getString('resources', 'TWEET_BOX_LABEL')}" styleName="normal"/>
+		<mx:TextArea id="tweetBox" width="100%" height="80" 
+			left="10" top="26" styleName="formField" 
+			change="{characterCountCheck(event)}" updateComplete="characterCountCheck(event)"/>
+		<mx:HBox>
+			<mx:Button id="tweetButton" icon="@Embed(source='/assets/tweet_icon.png')" 
+				label="{resourceManager.getString('resources', 'TWEET_BUTTON_LABEL')}" 
+				styleName="formButton" click="{tweet(event)}"/>
+			<mx:Button id="emptyTweetBoxButton" icon="@Embed(source='/assets/empty_icon.png')" 
+				label="{resourceManager.getString('resources', 'CLEAR_BUTTON_LABEL')}" 
+				styleName="formButton" click="{tweetBox.text=''}"/>
+			<mx:Label id="characterCountLabel" styleName="normal" text="140" right="0" top="114"/>
+		</mx:HBox>
+	
+		<!-- URL Shorten UI -->	
+		<mx:Label id="shortenUrlLabel" text="{resourceManager.getString('resources', 'SHORTEN_URL_LABEL')}" styleName="normal"/>
+		<mx:TextInput id="urlBox" width="100%" left="10" top="184" styleName="formField"/>
+		<mx:HBox left="15" top="214">
+			<mx:Button id="shortenUrlButton" icon="@Embed(source='/assets/shorten_icon.png')" 
+				label="{resourceManager.getString('resources', 'URL_SHORTEN_BUTTON_LABEL')}" 
+				styleName="formButton" 
+				click="{shortenUrl(event)}"/>
+			<mx:Button id="emptyUrlBoxButton" icon="@Embed(source='/assets/empty_icon.png')" 
+				label="{resourceManager.getString('resources', 'CLEAR_BUTTON_LABEL')}" 
+				styleName="formButton" click="{urlBox.text=''}"/>		
+		</mx:HBox>
+				
+	</mx:VBox>	
+	
+</mx:Canvas>

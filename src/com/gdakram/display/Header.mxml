@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="99%" height="50"  
+	creationComplete="{init()}" 
+	doubleClickEnabled="true" doubleClick="minimizeWindow(event)">
+	
+	<mx:Script>
+		<![CDATA[
+			import air.update.events.UpdateEvent;
+			import air.update.ApplicationUpdaterUI;
+			import com.gdakram.events.AppStateChangeEvent;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import com.gdakram.conf.*; 
+			
+			private var dropShadowFilter:DropShadowFilter;
+
+			private var appUpdater:ApplicationUpdaterUI = new ApplicationUpdaterUI();			
+
+			private function init():void {
+				this.addEventListener(MouseEvent.MOUSE_DOWN, moveWindow);
+				this.parent.addEventListener(AppStateChangeEvent.LOGGED_IN, loggedIn);				
+				dropShadowFilter = new DropShadowFilter();
+				dropShadowFilter.color = 0x000000;
+				dropShadowFilter.alpha = 0.4;
+				dropShadowFilter.blurX = 5;
+				dropShadowFilter.blurY = 5;
+				dropShadowFilter.distance = 2;
+				
+				// set the application version label to the header
+				this.setApplicationVersion();
+				
+				// setup the application updatera				
+				appUpdater.updateURL = ConfigurationManager.getAppUpdateUrl();
+				trace (appUpdater.updateURL);
+				appUpdater.isCheckForUpdateVisible = false;
+				appUpdater.addEventListener(UpdateEvent.INITIALIZED, onUpdateHandler);
+				appUpdater.addEventListener(ErrorEvent.ERROR, onErrorHandler);
+				appUpdater.initialize();
+			}
+			
+			private function onUpdateHandler(event:UpdateEvent):void {
+				appUpdater.checkNow(); // Go check for an update now	
+			}
+			
+			private function onErrorHandler(event:ErrorEvent):void {
+				trace (event.toString());
+			}
+			
+			private function setApplicationVersion():void {
+				var appXML:XML = NativeApplication.nativeApplication.applicationDescriptor;
+				var ns:Namespace = appXML.namespace();
+				appVersion.text = appXML.ns::version;
+			}
+			
+			private function loggedIn(event:AppStateChangeEvent):void {
+				twitterLabel.text = CPreferencesManager.getPreference('loginCred').twitterUsername;
+				lastfmLabel.text = CPreferencesManager.getPreference('loginCred').lastfmUsername;
+				loggedPanel.visible = true;
+			}
+			
+			private function addShadow(event:Event):void {
+				var comp:DisplayObject = event.target as DisplayObject;
+				comp.filters = [dropShadowFilter];
+			}
+			
+			private function removeShadow(event:Event):void {
+				var comp:DisplayObject = event.target as DisplayObject;				
+				comp.filters = [];
+			}
+			
+			private function moveWindow(event:Event):void {
+				stage.nativeWindow.startMove();				
+			}
+			
+			private function minimizeWindow(event:Event):void {
+				stage.nativeWindow.minimize();					
+			}
+			
+			private function closeWindow(event:Event):void {
+				stage.nativeWindow.close();
+			}
+			
+			private function showLoginForm(event:MouseEvent):void {
+				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGIN_FORM, true, false));
+				loggedPanel.visible = false;
+			}
+						
+		]]>
+	</mx:Script>
+
+	<mx:Image id="closeButton" source="assets/close_button.png"  y="10" x="10"
+		mouseOver="{addShadow(event)}" mouseOut="{removeShadow(event)}" click="{closeWindow(event)}" 		
+		toolTip="{resourceManager.getString('resources', 'CLOSE_APP_TOOLTIP')}"
+		buttonMode="true"/>
+		
+	<mx:Image id="minimizeButton" source="assets/minimize_button.png"  x="37" y="10" 
+		mouseOver="{addShadow(event)}" mouseOut="{removeShadow(event)}" click="{minimizeWindow(event)}" 
+		toolTip="{resourceManager.getString('resources', 'MINIMIZE_APP_TOOLTIP')}"
+		buttonMode="true"/>
+		
+	<mx:Label text="{resourceManager.getString('resources', 'APP_TITLE')}" 
+		styleName="appTitle" top="0"  right="68"/>
+	<mx:Label id="appVersion" styleName="appVersion" top="22" right="68" alpha="0.5"/>
+	
+		
+	<mx:HBox top="32" id="loggedPanel" visible="false" horizontalCenter="0">
+		<mx:Image source="/assets/twitter_icon.png" toolTip="{resourceManager.getString('resources', 'ON_TWITTER_TOOLTIP')}"/>
+		<mx:Label id="twitterLabel"/>
+		<mx:Image source="/assets/lastfm_icon.png" toolTip="{resourceManager.getString('resources', 'ON_LASTFM_TOOLTIP')}"/>
+		<mx:Label id="lastfmLabel"/>
+		<mx:Image id="settingsButton" source="assets/settings_icon.png" buttonMode="true"
+			toolTip="{resourceManager.getString('resources', 'CHANGE_CONFIGURATION_TOOLTIP')}"
+			mouseOver="{addShadow(event)}" mouseOut="{removeShadow(event)}" click="{showLoginForm(event)}"/>
+	</mx:HBox>
+			
+</mx:Canvas>

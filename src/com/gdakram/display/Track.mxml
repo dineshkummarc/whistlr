@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init(event)" 
+	styleName="chartItemDefault">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.CursorManager;
+			import com.gdakram.events.TweetEvent;
+			import com.gdakram.events.StatusMessageEvent;
+			import com.gdakram.events.UrlShortenerEvent;
+			import com.gdakram.utils.TrakzUrlShortener;
+			import com.gdakram.utils.IsGdUrlShortener;
+			import mx.controls.Image;
+		
+			/**
+			 * The recent track XML object that's fed into this this display component 
+			 */ 
+			[Bindable]
+			public var track:Object;
+			
+			/**
+			 * Holds the interval ID of the operation to clear out the tweet button image
+			 * when and if the mouse is not over the chart item
+			 */  
+			private var mouseOverIntervalId:Number; 
+			
+			/**
+			 * The rank attribute of the track, if applicable
+			 */ 
+			private var trackRank:String;
+
+			private function init(event:Event):void {
+				this.track.url = "http://" + this.track.url;
+				var playCount:String = resourceManager.getString("resources","CHART_ITEM_PLAYED_LABEL") + this.track.playcount;
+				var trackName:String = (this.track.name as String).length > 40 ? (this.track.name as String).substr(0,40) + "..." : this.track.name;
+				this.trackRank = (this.track.rank != undefined) ? "#" + this.track.rank : ""; 
+				info.htmlText = "<a href=\""+ this.track.url + "\"><u>" + trackName + "</u></a><br>" + 
+								"- " + this.track.artist + "<br>" + this.trackRank + " (" + playCount + ")";
+			}
+			
+			/**
+			 * Shorten the track url if you user decides to tweet this track
+			 */
+			private function shortenUrl(event:MouseEvent):void {
+				var trakzUrlShortener:TrakzUrlShortener = new TrakzUrlShortener(this.track.url);
+				trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, tweet);
+				trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENING_ERROR, isgdUrlShortenerHandler);
+				trakzUrlShortener.shorten();
+				CursorManager.setBusyCursor();
+			}
+
+			/**
+			 * A backup shortener in case tra.kz bails
+			 */ 
+			private function isgdUrlShortenerHandler(event:UrlShortenerEvent):void {
+				var isgdUrlShortener:IsGdUrlShortener = new IsGdUrlShortener(this.track.url);
+				isgdUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, tweet);
+				isgdUrlShortener.shorten();
+				CursorManager.setBusyCursor();
+			}
+
+			/**
+			 * Dispatch the tweet event so the tweet box can get populated with it
+			 */
+			private function tweet(event:UrlShortenerEvent):void {
+				var tweetMsg:String = resourceManager.getString('resources','TWEET_WEEKLY_TOP_TRACK_MSG') + 
+							   " " + this.trackRank + " " + this.track.name + " - " + this.track.artist + 
+							   " " + event.url ;
+				this.dispatchEvent(new TweetEvent(TweetEvent.POPULATE_TWEET_BOX,true,false,tweetMsg));
+			}
+			
+			/**
+			 * Turns on the visibility of the tweet button image and sets off an interval
+			 * to turn it off. But if the mouse remains over the album track cover
+			 * this function will be called again
+			 */ 
+			private function showTweetButtonhandler(event:MouseEvent):void {
+				this.tweetIcon.visible = true;
+				this.mouseOverIntervalId = setInterval(checkTweetIconVisibility,5000,event);
+			}
+			
+			/**
+			 * Called in an interval to hide the visibility of the tweet button image
+			 */ 
+			private function checkTweetIconVisibility(event:MouseEvent):void {
+				tweetIcon.visible = false;
+				clearInterval(this.mouseOverIntervalId);
+			}			
+						
+		]]>
+	</mx:Script>
+	<mx:Image id="trackImage"
+		source="/assets/track_icon.png" height="64" width="64" 
+		mouseOver="{showTweetButtonhandler(event)}" 
+		left="0" top="0"/>
+		
+	<mx:Image id="tweetIcon"
+		source="/assets/tweet_chart_item_icon.png" 
+		height="64" width="64" visible="false" 
+		buttonMode="true"
+		mouseOut="{tweetIcon.visible = false}"
+		toolTip="{resourceManager.getString('resources','TWEET_TRACK_TOOLTIP')}" 
+		left="0" top="0" click="{shortenUrl(event)}"/>
+		
+	<mx:TextArea id="info" editable="false" styleName="default" 
+		left="72" top="0" width="100%" height="100%" 
+		borderStyle="none" 
+		backgroundAlpha="0"/>
+</mx:Canvas>

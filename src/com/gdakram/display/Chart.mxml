@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:comp="com.gdakram.display.*" 
+	initialize="init(event)">
+	<mx:Metadata>
+		[ResourceBundle("resources")]		
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.resources.ResourceManager;
+			import mx.collections.ArrayCollection;
+			import com.gdakram.conf.*;
+			import com.gdakram.events.*;
+			import mx.controls.Alert;
+
+			[Bindable]
+			private var chartList:ArrayCollection = new ArrayCollection([ 
+				{ label : ResourceManager.getInstance().getString('resources', 'RECENT_TRACKS_LABEL'), chart : ChartEvent.LOAD_RECENT_TRACKS },
+				{ label : ResourceManager.getInstance().getString('resources', 'TOP_WEEKLY_TRACKS_LABEL'), chart : ChartEvent.LOAD_WEEKLY_TOP_TRACKS },
+				{ label : ResourceManager.getInstance().getString('resources', 'TOP_WEEKLY_ARTISTS_LABEL'), chart : ChartEvent.LOAD_WEEKLY_TOP_ARTISTS }
+			]);
+			
+			/**
+			 * Keeps a list of all the chart containers
+			 */ 
+			private var containerList:ArrayCollection;
+
+			private function init(event:Event):void {
+				this.parentApplication.addEventListener(ChartEvent.LOAD_RECENT_TRACKS, loadChartHandler);
+				this.parentApplication.addEventListener(ChartEvent.LOAD_WEEKLY_TOP_TRACKS, loadChartHandler);
+				this.parentApplication.addEventListener(ChartEvent.LOAD_WEEKLY_TOP_ARTISTS, loadChartHandler);
+				this.parentApplication.addEventListener(LocaleEvent.LOCALE_CHANGED, localeChangedHandler);
+				this.containerList =  new ArrayCollection([recenTracksContainer, topWeeklyTracksContainer, topWeeklyArtistsContainer]);
+			}
+
+			private function localeChangedHandler(event:LocaleEvent):void {
+				var chartList:ArrayCollection = new ArrayCollection([ 
+						{ label : ResourceManager.getInstance().getString('resources', 'RECENT_TRACKS_LABEL'), chart : ChartEvent.LOAD_RECENT_TRACKS },
+						{ label : ResourceManager.getInstance().getString('resources', 'TOP_WEEKLY_TRACKS_LABEL'), chart : ChartEvent.LOAD_WEEKLY_TOP_TRACKS },
+						{ label : ResourceManager.getInstance().getString('resources', 'TOP_WEEKLY_ARTISTS_LABEL'), chart : ChartEvent.LOAD_WEEKLY_TOP_ARTISTS }
+					]);
+				var currentIndex:Number = chartComboBox.selectedIndex;
+				chartComboBox.dataProvider = chartList;
+				chartComboBox.selectedIndex = currentIndex; 
+			}
+
+			private function clearAllContainers():void {
+				for (var i:int = 0; i < containerList.length; i++) {
+					try {
+						var comp:VBox = (containerList.getItemAt(i) as VBox);
+						comp.height = 0;
+						comp.removeAllChildren();
+					} catch (error:Error) {
+						trace (error.message);
+					} 	
+				}
+			}
+
+			private function loadChartHandler(event:ChartEvent):void {
+				var lastfm:Lastfm = new Lastfm(CPreferencesManager.getPreference("loginCred").lastfmUsername);
+				switch (event.type) {
+					case ChartEvent.LOAD_RECENT_TRACKS :
+						chartLoaderService.url = lastfm.userRecentTracksUrl;
+						chartLoaderService.send();
+						chartComboBox.selectedIndex = 0;
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LOADING_RECENT_TRACKS_MSG')));
+						break;
+					case ChartEvent.LOAD_WEEKLY_TOP_ARTISTS :
+						chartLoaderService.url = lastfm.userWeeklyTopAristsUrl;
+						chartLoaderService.send();
+						chartComboBox.selectedIndex = 2;
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LOADING_WEEKLY_TOP_ARTISTS_MSG')));
+						break;
+					case ChartEvent.LOAD_WEEKLY_TOP_TRACKS :
+						chartLoaderService.url = lastfm.userWeeklyTopTracksUrl;
+						chartLoaderService.send();
+						chartComboBox.selectedIndex = 1;
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LOADING_WEEKLY_TOP_TRACKS_MSG')));
+						break;
+				}
+			}
+			
+			private function changeChartHandler(event:Event):void {
+				loadChartHandler(new ChartEvent(chartComboBox.selectedItem.chart));
+			}
+			
+			private function chartResultHandler(event:ResultEvent):void {
+				// clean the slate
+				this.clearAllContainers();
+
+				// Load the content foo
+				switch (chartComboBox.selectedItem.chart) {
+					case ChartEvent.LOAD_RECENT_TRACKS :
+						try {
+							if (event.result.lfm.recenttracks.track.length == 0) throw new Error("",204);
+							recenTracksContainer.height = 250;
+							recentTracksRepeater.dataProvider = event.result.lfm.recenttracks.track;
+						} 
+						catch (error:Error) {
+							trace(error.getStackTrace());
+							this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LASTFM_FAILED_CHART') + "\"" + error.errorID + "\""));
+						}
+						break;
+					case ChartEvent.LOAD_WEEKLY_TOP_ARTISTS :
+						try {
+							topWeeklyArtistsContainer.height = 250;
+							topWeeklyArtistsRepeater.dataProvider = event.result.lfm.weeklyartistchart.artist;
+						}
+						catch (error:Error) {
+							trace(error.getStackTrace());
+							this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LASTFM_FAILED_CHART') + "\"" + error.errorID + "\""));
+						}						
+						break;
+					
+						break;
+					case ChartEvent.LOAD_WEEKLY_TOP_TRACKS :
+						try {
+							topWeeklyTracksContainer.height = 250;
+							topWeeklyTracksRepeater.dataProvider = event.result.lfm.weeklytrackchart.track;
+						}
+						catch (error:Error) {
+							trace(error.getStackTrace());
+							this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LASTFM_FAILED_CHART') + "\"" + error.errorID + "\""));
+						}						
+						break;
+				}
+			}
+			
+			private function chartFaultHandler(event:FaultEvent):void {
+				var contentXML:XML = new XML(event.fault.content);
+				this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'CHART_UNAVAILABLE_MSG')));
+			}
+			
+		]]>
+	</mx:Script>
+
+	<mx:HTTPService id="chartLoaderService"
+		result="{chartResultHandler(event)}"
+		fault="{chartFaultHandler(event)}"
+		showBusyCursor="true"/>
+
+	<mx:VBox top="10" left="10" width="100%" height="100%">
+		<mx:HBox width="100%" horizontalAlign="right">
+			<mx:ComboBox id="chartComboBox" styleName="default" 
+				dataProvider="{chartList}" change="{changeChartHandler(event)}"/>
+			<mx:Image source="/assets/reload_icon.png" buttonMode="true" click="{changeChartHandler(event)}" 
+				toolTip="{resourceManager.getString('resources','RELOAD_CURRENT_CHART_TOOLTIP')}"/>
+		</mx:HBox>
+		
+		<!-- Recent tracks container -->
+		<mx:VBox height="0" width="100%" id="recenTracksContainer">
+			<mx:Repeater id="recentTracksRepeater">
+				<comp:RecentTrack track="{recentTracksRepeater.currentItem}" width="100%"/>
+			</mx:Repeater>
+		</mx:VBox>
+		
+		<!-- Top weekly tracks container -->
+		<mx:VBox height="0" width="100%" id="topWeeklyTracksContainer">
+			<mx:Repeater id="topWeeklyTracksRepeater">
+				<comp:Track track="{topWeeklyTracksRepeater.currentItem}" width="100%"/>
+			</mx:Repeater>
+		</mx:VBox>
+		
+		<!-- Top weekly artists container -->
+		<mx:VBox height="0" width="100%" id="topWeeklyArtistsContainer">
+			<mx:Repeater id="topWeeklyArtistsRepeater">
+				<comp:Artist artist="{topWeeklyArtistsRepeater.currentItem}" width="100%"/> 
+			</mx:Repeater>
+		</mx:VBox>
+				
+	</mx:VBox>
+	
+</mx:Canvas>

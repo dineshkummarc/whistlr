@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute" width="300" height="250" 
+	title="{resourceManager.getString('resources', 'LOGIN_TITLE')}"
+	initialize="{init(event)}"	
+	color="#3C1B0B" 
+	fontWeight="normal" 
+	fontStyle="normal"
+	textAlign="center" 
+	backgroundColor="#FCFCF9">
+
+	<!-- Twitter Cred Validator -->	
+	<mx:HTTPService id="twitterValidationService" 
+		url="{Twitter.VERIFY_CREDENTIALS_URL}" 
+		showBusyCursor="true" 
+		result="twitterValidationResult(event)"		
+		fault="twitterValidationFault(event)">
+		<mx:request>
+			<suppress_response_codes>true</suppress_response_codes>
+		</mx:request>
+	</mx:HTTPService>
+
+	<!-- Last.fm Cred Validator -->
+	<mx:HTTPService id="lastfmValidationService"
+		showBusyCursor="true"
+		result = "lastfmValidationResult(event)"
+		fault="lastfmValidationFault(event)" />
+
+	<mx:Script>
+		<![CDATA[
+			import com.gdakram.events.ChartEvent;
+			import com.gdakram.events.AppStateChangeEvent;
+			import com.gdakram.events.StatusMessageEvent;
+			import mx.utils.Base64Encoder;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.validators.ValidationResult;
+			import mx.controls.Alert;
+			import com.gdakram.conf.*;
+			
+			/**
+			 * A boolean variable that is managed to see if the twitter username is invalid 
+			 */
+			private var twitterUsernameInvalid:Boolean = false;
+			
+			/**
+			 * A boolean variable that is managed to see if the twitter password is invalid
+			 */
+			private var twitterPasswordInvalid:Boolean = false;
+			
+			/**
+			 * A boolean variable that is managed to see if the last.fm password is invalid
+			 */
+			private var lastfmUsernameInvalid:Boolean = false;
+
+			/**
+			 * Component init function
+			 */
+			 private function init(event:Event):void {
+			 	this.parentApplication.addEventListener(AppStateChangeEvent.LOGIN_FORM, logoutButtonHandler);
+			 	this.logoutButtonHandler(event);
+			 }
+
+			/**
+			 * Ensures the twitter and last.fm user entered credential fields are valid.
+			 * If the entered fields are valid, the app will go onto to ensure the twitter cred is valid
+			 * and thereafter, the last.fm cred
+			 */
+			private function validateFormFields(event:MouseEvent):void {				 
+				try {
+					twitterUsernameInvalid = (twitterUsernameValidator.validate().results[0] as ValidationResult).isError;	
+				} catch (err:Error) { twitterUsernameInvalid = false; }
+				
+				try {
+					twitterPasswordInvalid = (twitterPasswordValidator.validate().results[0] as ValidationResult).isError;	
+				} catch (err:Error) { twitterPasswordInvalid = false; }
+				
+				try {
+					lastfmUsernameInvalid = (lastfmUsernameValidator.validate().results[0] as ValidationResult).isError;	
+				} catch (err:Error) { lastfmUsernameInvalid = false; }
+				
+				// If all the data is filled out, let's validate the cred against twitter
+				// if that pans out well, we'll go to verifying last.fm
+				if (!(twitterUsernameInvalid || twitterPasswordInvalid || lastfmUsernameInvalid)) {
+					var encoder:Base64Encoder = new Base64Encoder();
+					encoder.insertNewLines = false;
+					encoder.encode(twitterUsername.text + ":" + twitterPassword.text);
+					twitterValidationService.headers["Authorization"] = "Basic " + encoder.toString();
+					twitterValidationService.send();
+				}
+			}
+
+			/**
+			 * Validates the twitter credentials. 
+			 * Dispatches error message if unable to validate.
+			 * If twitter validation succeeds, it proceeds to do validatation for last.fm username 
+			 **/
+			private function twitterValidationResult(event:ResultEvent):void {
+				try {
+					// if twitter validation fails
+					if (event.result.user.id == undefined) {
+						if (event.result.hash.error == "Could not authenticate you.") {
+							this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'TWITTER_FAILED_AUTH')));
+						} 
+					} 
+					// moving onto last.fm validation service
+					else {
+						var lastfm:Lastfm = new Lastfm(lastfmUsername.text);
+						lastfmValidationService.url = lastfm.userRecentTracksUrl;
+						lastfmValidationService.send();
+					}
+				} 
+				catch (error:Error) {
+					if (event.result.hash.error != undefined) {
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'TWITTER_FAILED') + "\"" + event.result.hash.error + "\""));
+					} else {
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'GENERAL_ERROR') + " \"" + error.message + "\""));
+					}						
+				} 
+			}
+			
+			/**
+			 * A 2xx response back from last.fm will signify the last.fm username
+			 * has been successfully verified. We can now store all credential information
+			 * into preferences manager and change the state of the application to load all 
+			 * the data 
+			 */
+			private function lastfmValidationResult(event:ResultEvent):void {
+				if (event.result.lfm.status == "ok") {
+					var loginCred:LoginCred = new LoginCred(twitterUsername.text, twitterPassword.text, lastfmUsername.text);
+					CPreferencesManager.setPreference('loginCred',loginCred);
+					this.dispatchEvent(new ChartEvent(ChartEvent.LOAD_RECENT_TRACKS, true, false));
+					this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false));					
+				} else {
+					this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources','LASTFM_FAILED')));
+				}
+			}
+
+			/**
+			 * If http response code from twitter is non-2xx, this method
+			 * will handle the error event 
+			 */ 
+			private function twitterValidationFault(event:FaultEvent):void {
+				if (event.fault.content == "") {
+					this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'TWITTER_FAILED') + "\"" + event.fault.faultString + "\""));					
+				} else {
+					this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'TWITTER_FAILED') + "\"" + event.fault.content + "\""));					
+				}
+			}
+
+			/**
+			 * If http response code from last.fm is non-2xx, this method
+			 * will handle the error event
+			 */
+			private function lastfmValidationFault(event:FaultEvent):void {
+				try {
+					var contentXML:XML = new XML(event.fault.content);
+					if (contentXML.error == "Invalid user name supplied" || contentXML.error.@code == "6") {
+						this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LASTFM_FAILED_AUTH')));						
+					}
+				} 
+				catch (error:Error) {
+					this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LASTFM_FAILED') + "\"" + event.fault.faultString + "\""));
+				}
+			}
+			
+			/**
+			 * Maintains the state of the logout button based on whether
+			 * the loginCred in preferences manager is found or not
+			 */
+			private function logoutButtonHandler(event:Event):void {
+				if (CPreferencesManager.getPreference('loginCred') == null)  {
+					logoutButton.visible = false;
+					logoutButton.enabled = false;
+				} else {
+					logoutButton.visible = true;
+					logoutButton.enabled = true;
+				}
+			}
+			
+			/**
+			 * Deletes the preferences cookie and clears the form input elements
+			 */ 
+			private function clearPreferences(event:MouseEvent):void {
+				CPreferencesManager.setPreference('loginCred',null);
+				this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, resourceManager.getString('resources', 'LOGGED_OUT_MSG')));
+				twitterUsername.text = "";
+				twitterPassword.text = "";
+				lastfmUsername.text = "";
+				logoutButton.enabled = false;
+			}
+
+		]]>
+	</mx:Script>
+
+	<!-- Validators -->
+	<mx:StringValidator id="twitterUsernameValidator" source="{twitterUsername}" property="text" required="true"  
+		requiredFieldError="{resourceManager.getString('resources', 'REQUIRED_FIELD')}"/>
+	<mx:StringValidator id="twitterPasswordValidator" source="{twitterPassword}" property="text" required="true"
+		requiredFieldError="{resourceManager.getString('resources', 'REQUIRED_FIELD')}"/>
+	<mx:StringValidator id="lastfmUsernameValidator" source="{lastfmUsername}" property="text" required="true"	
+		requiredFieldError="{resourceManager.getString('resources', 'REQUIRED_FIELD')}"/>
+
+	<!-- The login form -->
+	<mx:Form horizontalCenter="0" top="0">
+		<!-- Twitter UI portion -->
+		<mx:HBox>
+			<mx:Image id="twitterIcon" source="assets/twitter_icon.png" scaleContent="true" autoLoad="true"/>	
+			<mx:Label text="{resourceManager.getString('resources', 'TWITTER_LABEL')}" styleName="serviceLabel"/>			
+		</mx:HBox>
+		<mx:FormItem label="{resourceManager.getString('resources', 'TWITTER_USERNAME')}">
+			<mx:TextInput id="twitterUsername" text="{CPreferencesManager.getPreference('loginCred').twitterUsername}" 
+				styleName="formField"/>
+		</mx:FormItem>		 
+		<mx:FormItem label="{resourceManager.getString('resources', 'TWITTER_PASSWORD')}">
+			<mx:TextInput id="twitterPassword" displayAsPassword="true" text="{CPreferencesManager.getPreference('loginCred').twitterPassword}" 
+				styleName="formField"/>
+		</mx:FormItem>
+		
+		<!-- Last.fm UI portion -->
+		<mx:HBox>
+			<mx:Image id="lastfmIcon" source="assets/lastfm_icon.png" scaleContent="true" autoLoad="true"/>
+			<mx:Label text="{resourceManager.getString('resources', 'LASTFM_LABEL')}" styleName="serviceLabel"/>
+		</mx:HBox>		 		
+		<mx:FormItem label="{resourceManager.getString('resources', 'LASTFM_USERNAME')}">
+			<mx:TextInput id="lastfmUsername" text="{CPreferencesManager.getPreference('loginCred').lastfmUsername}" 
+				styleName="formField"/>
+		</mx:FormItem>
+		<mx:FormItem >
+		<mx:HBox>
+			<mx:Button id="loginButton" label="{resourceManager.getString('resources', 'SUBMIT_LABEL')}"
+				icon="@Embed(source='/assets/goto_icon.png')" 
+				styleName="formButton" click="{validateFormFields(event)}"/>
+			<mx:Button id="logoutButton" label="{resourceManager.getString('resources', 'LOGOUT_LABEL')}"
+				icon="@Embed(source='/assets/logout_icon.png')" visible="false"
+				styleName="formButton" click="{clearPreferences(event)}" />			
+		</mx:HBox>
+		</mx:FormItem>
+	</mx:Form>
+
+</mx:TitleWindow>

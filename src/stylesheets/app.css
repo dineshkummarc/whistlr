@@ -1,0 +1,76 @@
+/* Application Wide Styles */
+Application {
+	background-color:"";
+	background-image:"";
+	padding: 0px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;	
+	font-family : "Lucida Grande";	
+}
+
+.appTitle {	
+	font-size : 20px;
+	font-weight: bold; 
+	color: white;
+}
+
+Label.serviceLabel, Label.normal
+{
+	color: #55290B;
+	fontFamily: Verdana;
+	fontSize: 11;
+}
+
+Label.serviceLabel
+{
+	fontWeight: bold;	
+}
+
+Label.appVersion 
+{
+	color: #FFFFFF;
+}
+
+TextInput.formField, TextArea.formField
+{
+	themeColor: #381B07;
+	text-align: left;
+	border-style : solid;
+	color: #381B07;
+	font-anti-alias-type : advanced;	
+	font-size : 10px;	
+}
+
+ComboBox.default
+{
+	color: #5D2D03;
+	rollOverColor: #C56006;
+	selectionColor: #844105;
+	textRollOverColor: #FFFFFF;
+	textSelectedColor: #FFFFFF;
+	themeColor: #844105;
+	font-weight: normal;
+}
+
+Button.formButton
+{
+	color: #5D2D03;
+	themeColor: #724B0E;
+	textRollOverColor: #5D2D03;
+}
+
+Canvas.chartItemDefault 
+{
+	border-style: none;
+}
+
+Canvas.chartItemHover
+{
+	border-style: solid;
+}
+
+ScrollBar {
+	border-color: #998352;
+}

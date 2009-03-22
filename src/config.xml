@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<whistlr>
+	<apikeys>
+		<!-- Fill in your last.fm web services api key 
+		   - If you don't have it, visit: http://www.last.fm/api/account
+		   -->
+		<key service="lfm"></key>
+		<!-- 
+		   - Fill in your tra.kz web service api key
+		   - If you don't have it, contact http://twitter.com/ljharb 
+		   -->
+		<key service="trakz"></key>
+	</apikeys>
+	<!-- 
+	   - The url of the update.xml file that 
+	   - coordinates with the AIR application updater
+	   - to check on any application updates
+	   -->
+	<update_url>http://gdakram.github.com/whistlr/update.xml</update_url>
+</whistlr>

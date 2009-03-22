@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute" width="300" height="250" 
+	title="{resourceManager.getString('resources', 'MISSING_API_KEYS_MSG')}"
+	initialize="init(event)"	
+	color="#3C1B0B" 
+	fontWeight="normal" 
+	fontStyle="normal"
+	textAlign="left" 
+	backgroundColor="#FCFCF9">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.gdakram.conf.ConfigurationManager;
+						 
+			private function init(event:Event):void {
+				lfmAPIKeyMissingBox.visible = ConfigurationManager.getLastfmAPIKey().length == 0 ? true : false;
+				trakzAPIKeyMissingBox.visible = ConfigurationManager.getTrakzAPIKey().length == 0 ? true : false;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:VBox top="10">
+		<mx:VBox width="100%" id="lfmAPIKeyMissingBox" visible="false">
+			<mx:Label styleName="normal" text="* {resourceManager.getString('resources','MISSING_LFM_API_KEY_MSG')}"/>
+		</mx:VBox>
+		<mx:VBox width="100%" id="trakzAPIKeyMissingBox" visible="false">
+			<mx:Label styleName="normal" text="* {resourceManager.getString('resources','MISSING_TRAKZ_API_KEY_MSG')}"/>
+		</mx:VBox>		
+	</mx:VBox>
+	
+</mx:TitleWindow>

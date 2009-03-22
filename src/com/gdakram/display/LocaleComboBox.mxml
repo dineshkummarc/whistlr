@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>	
+<mx:ComboBox 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	initialize="localeComboBoxInit(event)"
+	change="localeComboBoxOnChange(event)"
+	dataProvider="{localesHumanReadable}"
+ 	styleName="default">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.soap.LoadEvent;
+			import com.gdakram.events.LocaleEvent;
+			import mx.resources.ResourceManager;
+			import com.gdakram.conf.CPreferencesManager;
+			
+			[Bindable]
+			private var localesHumanReadable:Array = [ "English" , "Español" ];
+			
+			private var locales:Array = [ "en_US" , "es_ES" ];
+
+			private function localeComboBoxOnChange(event:Event):void {
+				ResourceManager.getInstance().localeChain = [ locales[this.selectedIndex] ];
+				CPreferencesManager.setPreference('locale', locales[this.selectedIndex]);
+				this.dispatchEvent(new LocaleEvent(LocaleEvent.LOCALE_CHANGED, true, false));
+			}
+			
+			private function localeComboBoxInit(event:Event):void {
+				if (CPreferencesManager.getPreference('locale') != null) {
+					for (var i:int=0; i < this.locales.length; i++) {
+						if (this.locales[i] == CPreferencesManager.getPreference('locale')) {
+							this.selectedIndex = i;
+							break;
+						}
+					}
+				} else {
+					this.selectedIndex = this.locales.indexOf(ResourceManager.getInstance().localeChain[0]);	
+				}
+			}				
+		]]>
+	</mx:Script>
+	
+</mx:ComboBox>
