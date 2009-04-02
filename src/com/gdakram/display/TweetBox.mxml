@@ -95,7 +95,7 @@
 				encoder.insertNewLines = false;
 				encoder.encode(CPreferencesManager.getPreference('loginCred').twitterUsername + ":" + CPreferencesManager.getPreference('loginCred').twitterPassword);
 				tweetService.headers["Authorization"] = "Basic " + encoder.toString();
-				tweetService.send({"status" : status, "source" : "Whistler"});	
+				tweetService.send({"status" : status, "source" : "whistlr"});	
 			}
 			
 			/**
@@ -118,7 +118,8 @@
 
 	<!-- The twitter posting service -->
 	<mx:HTTPService id="tweetService" method="POST"
-		url="{Twitter.TWEET_POST_URL}" 
+		url="{Twitter.TWEET_POST_URL}"
+		resultFormat="text" 
 		result="{tweetResult(event)}" fault="{tweetFault(event)}" 
 		showBusyCursor="true">
 		<mx:request>
