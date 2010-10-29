@@ -2,6 +2,7 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init(event)">
 	<mx:Script>
 		<![CDATA[
+			import com.gdakram.conf.ConfigurationManager;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import com.gdakram.utils.TrakzUrlShortener;
@@ -11,7 +12,10 @@
 			import mx.controls.Alert;
 			import mx.managers.CursorManager;
 			import mx.utils.Base64Encoder;
-			import com.gdakram.conf.Twitter;
+			import com.gdakram.conf.*;
+			import com.coderanger.*;
+			
+			private var twitauth:OAuthManager = new OAuthManager();
 			
 			/**
 			 * Event handler when the canvas has been initialized
@@ -19,6 +23,11 @@
 			private function init(event:Event):void {
 				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false));
 				this.parentApplication.addEventListener(TweetEvent.POPULATE_TWEET_BOX,populateTweetBox);
+				
+				// initialize twiauth
+				this.twitauth.consumerKey = ConfigurationManager.getTwitterConsumerKey(); 
+				this.twitauth.consumerSecret = ConfigurationManager.getTwitterConsumerSecret();
+				this.twitauth.oauthDomain = "twitter.com";
 			}
 			
 			/**
@@ -91,11 +100,11 @@
 			 */
 			private function tweet(event:MouseEvent):void {
 				var status:String = tweetBox.text;
-				var encoder:Base64Encoder = new Base64Encoder();
-				encoder.insertNewLines = false;
-				encoder.encode(CPreferencesManager.getPreference('loginCred').twitterUsername + ":" + CPreferencesManager.getPreference('loginCred').twitterPassword);
-				tweetService.headers["Authorization"] = "Basic " + encoder.toString();
-				tweetService.send({"status" : status, "source" : "whistlr"});	
+				this.twitauth.accessPin = Number(CPreferencesManager.getPreference('loginCred').twitterAccessPin);
+				this.twitauth.accessToken = CPreferencesManager.getPreference('loginCred').twitterAccessToken;
+				this.twitauth.accessTokenSecret = CPreferencesManager.getPreference('loginCred').twitterAccessTokenSecret;				
+				var postData:String = this.twitauth.getSignedURI( "POST", "http://twitter.com/statuses/update.xml", "status=" + encodeURIComponent(status));
+				tweetService.send(new QueryString( postData ).toPostObject());
 			}
 			
 			/**
@@ -119,13 +128,11 @@
 	<!-- The twitter posting service -->
 	<mx:HTTPService id="tweetService" method="POST"
 		url="{Twitter.TWEET_POST_URL}"
+		contentType="application/x-www-form-urlencoded"
+		useProxy="false" 
 		resultFormat="text" 
 		result="{tweetResult(event)}" fault="{tweetFault(event)}" 
-		showBusyCursor="true">
-		<mx:request>
-			<suppress_response_codes>true</suppress_response_codes>
-		</mx:request>		
-	</mx:HTTPService>
+		showBusyCursor="true"/>
 	
 	<mx:VBox top="10" left="10" width="100%">
 		<!-- Tweet Box UI -->	

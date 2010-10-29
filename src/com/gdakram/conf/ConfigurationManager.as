@@ -42,5 +42,19 @@ package com.gdakram.conf
 			return getConfiguration().update_url;
 		}
 		
+		/**
+		 * Gets the twitter consumer key 
+		 */
+		public static function getTwitterConsumerKey():String {
+			return getConfiguration().apikeys.key.(@service == "twitter").consumer_key;
+		}
+		
+		/**
+		 * Gets the twitter consumer secret 
+		 */
+		public static function getTwitterConsumerSecret():String {
+			return getConfiguration().apikeys.key.(@service == "twitter").consumer_secret;
+		}
+		
 	}
 }

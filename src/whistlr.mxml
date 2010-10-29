@@ -15,6 +15,7 @@
 		
 	<mx:Script>
 		<![CDATA[
+			import mx.utils.ObjectUtil;
 		import mx.controls.Alert;
 		import mx.resources.ResourceManager;
 		import com.gdakram.events.*;
@@ -30,12 +31,17 @@
 			// Check to see if the API keys are there
 			if (foundAPIKeys()) {
 				// If the login credentials is already there, change the app state to logged in
-				this.currentState = (CPreferencesManager.getPreference("loginCred") != null) ? AppStateChangeEvent.LOGGED_IN : AppStateChangeEvent.LOGIN_FORM;   				
+				this.currentState = (CPreferencesManager.getPreference("loginCred") != null) ? AppStateChangeEvent.LOGGED_IN : AppStateChangeEvent.LOGIN_FORM;
+				trace(ObjectUtil.toString(CPreferencesManager.getPreference("loginCred")));
 			} 
 		}
 
 		private function foundAPIKeys():Boolean {
-			if ((ConfigurationManager.getLastfmAPIKey().length == 0) || (ConfigurationManager.getTrakzAPIKey().length == 0)) {
+			// Checks for API keys for last.fm, trakz, twitter OAuth
+			if ((ConfigurationManager.getLastfmAPIKey().length == 0) 
+				|| (ConfigurationManager.getTrakzAPIKey().length == 0)
+				|| (ConfigurationManager.getTwitterConsumerKey().length == 0)
+				|| (ConfigurationManager.getTwitterConsumerSecret().length == 0)) {
 				this.currentState = AppStateChangeEvent.API_KEYS_MISSING_ERROR;
 				return false;
 			} else {

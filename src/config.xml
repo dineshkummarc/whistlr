@@ -10,6 +10,14 @@
 		   - If you don't have it, contact http://twitter.com/ljharb 
 		   -->
 		<key service="trakz"></key>
+		<!--
+		   - Fill in your twiter oauth consumer key and consumer secret
+		   -
+		   -->
+		<key service="twitter">
+			<consumer_key></consumer_key>
+			<consumer_secret></consumer_secret>
+		</key>
 	</apikeys>
 	<!-- 
 	   - The url of the update.xml file that 

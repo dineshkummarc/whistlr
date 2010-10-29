@@ -6,6 +6,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.utils.ObjectUtil;
 			import air.update.events.UpdateEvent;
 			import air.update.ApplicationUpdaterUI;
 			import com.gdakram.events.AppStateChangeEvent;

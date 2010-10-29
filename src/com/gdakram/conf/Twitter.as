@@ -7,7 +7,7 @@ package com.gdakram.conf
 		
 		public static const FRIENDS_TIMELINE_URL:String = "https://twitter.com/statuses/friends_timeline.xml";
 		
-		public static const TWEET_POST_URL:String = "http://twitter.com/statuses/update.json"
+		public static const TWEET_POST_URL:String = "http://twitter.com/statuses/update.xml"
 		
 	}
 }
