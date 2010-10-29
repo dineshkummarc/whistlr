@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
-  <version>v0.0.1 (alpha)</version>
-	<url>http://cloud.github.com/downloads/gdakram/whistlr/whistlr.air</url>
+  <version>v0.0.2 (alpha)</version>
+	<url>http://gdakram.com/downloads/whistlr/whistlr.air</url>
   <description><![CDATA[
 	v0.0.1 (alpha)
   * The very first version of the whistlr!
@@ -9,5 +9,8 @@
 	  a. Recently played tracks
 	  b. Weekly top artists
 	  c. Weekly top tracks
+
+	v0.0.2 (alpha)
+  * Whistlr now works with OAuth	  
   ]]></description>
 </update>
