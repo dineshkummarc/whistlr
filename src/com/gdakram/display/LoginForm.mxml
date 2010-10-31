@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
-	layout="absolute" width="300" height="250" 
+	layout="absolute" width="300" height="280" 
 	title="{resourceManager.getString('resources', 'LOGIN_TITLE')}"
 	initialize="{init(event)}"	
 	color="#3C1B0B" 
@@ -41,7 +41,7 @@
 			 *	Instance of the OAuthManager
 			 **/
 			[Bindable]
-			private var twitauth:OAuthManager = new OAuthManager();
+			private var twitauth:OAuthManager;
 			
 			/**
 			 *	Instance of LoginCred 
@@ -52,8 +52,8 @@
 			 * Component init function
 			 */
 			 private function init(event:Event):void {
-			 	this.parentApplication.addEventListener(AppStateChangeEvent.LOGIN_FORM, logoutButtonHandler);
-			 	this.logoutButtonHandler(event);
+			 	this.parentApplication.addEventListener(AppStateChangeEvent.LOGIN_FORM, logoutButtonStateHandler);
+			 	this.logoutButtonStateHandler(event);
 
 				// Add the validators into the validator array
 				validatorArr = new Array();
@@ -61,6 +61,11 @@
 				validatorArr.push(lastfmUsernameValidator);
 
 				// oauth setup
+				if (CPreferencesManager.getPreference("loginCred") == null) twitterAuthorize();
+			 }
+
+			private function twitterAuthorize():void {
+				this.twitauth =  new OAuthManager();
 				this.twitauth.addEventListener(OAuthEvent.ON_REQUEST_TOKEN_RECEIVED, onRequestTokenReceived);
 				this.twitauth.addEventListener(OAuthEvent.ON_REQUEST_TOKEN_FAILED, onRequestTokenFailed );
 				this.twitauth.addEventListener(OAuthEvent.ON_ACCESS_TOKEN_RECEIVED, onAccessTokenReceived );
@@ -69,8 +74,8 @@
 				this.twitauth.consumerKey = ConfigurationManager.getTwitterConsumerKey(); 
 				this.twitauth.consumerSecret = ConfigurationManager.getTwitterConsumerSecret(); 
 				this.twitauth.oauthDomain = "twitter.com";
-				if (CPreferencesManager.getPreference("loginCred") == null) this.twitauth.requestToken();
-			 }
+				this.twitauth.requestToken();
+			}
 
 			/**
 			 * OAuthEvent Event handler token request success
@@ -107,8 +112,9 @@
 				//trace(ObjectUtil.toString(loginCred));
 				// save into prefs.default file and change the state
 				CPreferencesManager.setPreference('loginCred',loginCred);
+				this.twitterPin.text = "";
 				this.dispatchEvent(new ChartEvent(ChartEvent.LOAD_RECENT_TRACKS, true, false));
-				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false))					
+				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false));
 			}
 
 			/**
@@ -174,13 +180,15 @@
 			 * Maintains the state of the logout button based on whether
 			 * the loginCred in preferences manager is found or not
 			 */
-			private function logoutButtonHandler(event:Event):void {
+			private function logoutButtonStateHandler(event:Event):void {
 				if (CPreferencesManager.getPreference('loginCred') == null)  {
 					logoutButton.visible = false;
 					logoutButton.enabled = false;
+					cancelButton.visible = false;					
 				} else {
 					logoutButton.visible = true;
 					logoutButton.enabled = true;
+					cancelButton.visible = true;
 				}
 			}
 			
@@ -193,6 +201,11 @@
 				twitterPin.text = "";
 				lastfmUsername.text = "";
 				logoutButton.enabled = false;
+				cancelButton.visible = false;
+			}
+
+			private function cancelLogin(event:MouseEvent):void {
+				this.dispatchEvent(new AppStateChangeEvent(AppStateChangeEvent.LOGGED_IN, true, false));
 			}
 
 		]]>
@@ -212,11 +225,10 @@
 			<mx:Label text="{resourceManager.getString('resources', 'TWITTER_LABEL')}" styleName="serviceLabel"/>			
 		</mx:HBox>
 		<mx:FormItem label="{resourceManager.getString('resources', 'TWITTER_PIN')}">
-			<mx:TextInput id="twitterPin" text="{CPreferencesManager.getPreference('loginCred').twitterPin.toString()}" 
-				styleName="formField"/>
+			<mx:TextInput id="twitterPin" styleName="formField"/>
 			<mx:Button id="getOauthPinButton" label="{resourceManager.getString('resources', 'GET_PIN_LABEL')}"
 				icon="@Embed(source='/assets/goto_icon.png')" visible="true"
-				styleName="formButton" click="{this.twitauth.requestToken()}" />
+				styleName="formButton" click="{twitterAuthorize();}" />
 		</mx:FormItem>		 
 		
 		<!-- Last.fm UI portion -->
@@ -235,8 +247,13 @@
 				styleName="formButton" click="{validateFormFields(event)}"/>
 			<mx:Button id="logoutButton" label="{resourceManager.getString('resources', 'LOGOUT_LABEL')}"
 				icon="@Embed(source='/assets/logout_icon.png')" visible="false"
-				styleName="formButton" click="{clearPreferences(event)}" />			
+				styleName="formButton" click="{clearPreferences(event)}" />
 		</mx:HBox>
+		<mx:HBox>
+			<mx:Button id="cancelButton" label="{resourceManager.getString('resources', 'CANCEL_LABEL')}"
+				icon="@Embed(source='/assets/logout_icon.png')" visible="true"
+				styleName="formButton" click="{cancelLogin(event)}" />
+		</mx:HBox>		
 		</mx:FormItem>
 	</mx:Form>
 
