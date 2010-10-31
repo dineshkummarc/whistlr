@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
-  <version>v0.0.2 (alpha)</version>
+  <version>v0.0.3 (alpha)</version>
   <url>http://gdakram.com/downloads/whistlr/whistlr.air</url>
   <description><![CDATA[
+v0.0.3
+  * The OAuth process for twitter is now a little bit more robust
 v0.0.2
   * Application is now updated to work with OAuth
   ]]></description>
