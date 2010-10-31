@@ -3,17 +3,7 @@
   <version>v0.0.3 (alpha)</version>
 	<url>http://gdakram.com/downloads/whistlr/whistlr.air</url>
   <description><![CDATA[
-	v0.0.1 (alpha)
-  * The very first version of the whistlr!
-	* 3 last.fm charts available:
-	  a. Recently played tracks
-	  b. Weekly top artists
-	  c. Weekly top tracks
-
-	v0.0.2 (alpha)
-  * Whistlr now works with OAuth	  
-  
-	v0.0.2 (alpha)
+	v0.0.3 (alpha)
   * The OAuth process is now a bit more robust
   ]]></description>
 </update>
