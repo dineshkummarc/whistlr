@@ -4,19 +4,19 @@
 		<!-- Fill in your last.fm web services api key 
 		   - If you don't have it, visit: http://www.last.fm/api/account
 		   -->
-		<key service="lfm"></key>
+		<key service="lfm">8cd45e987afc6ac0f71894f45caa749d</key>
 		<!-- 
 		   - Fill in your tra.kz web service api key
 		   - If you don't have it, contact http://twitter.com/ljharb 
 		   -->
-		<key service="trakz"></key>
+		<key service="trakz">gdakram</key>
 		<!--
 		   - Fill in your twiter oauth consumer key and consumer secret
 		   -
 		   -->
 		<key service="twitter">
-			<consumer_key></consumer_key>
-			<consumer_secret></consumer_secret>
+			<consumer_key>BF7RFqMhoxjkCSfJ8iv3oQ</consumer_key>
+			<consumer_secret>WeXRlJ8VUDUSxOnYC0pmcZTIC0F7ruTzgx5Y9IoEIj0</consumer_secret>
 		</key>
 	</apikeys>
 	<!-- 
