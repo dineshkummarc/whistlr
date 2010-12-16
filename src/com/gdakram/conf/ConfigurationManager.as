@@ -29,13 +29,6 @@ package com.gdakram.conf
 		}
 	
 		/**
-		 * Gets the tra.kz key from the config.xml file 
-		 */ 
-		public static function getTrakzAPIKey():String {
-			return getConfiguration().apikeys.key.(@service == "trakz");
-		}
-		
-		/**
 		 * Gets the application update url from the config.xml file
 		 */ 
 		public static function getAppUpdateUrl():String {

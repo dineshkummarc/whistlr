@@ -1,3 +1,7 @@
+/**
+ * THIS IS A DEPRECATED CLASS
+ **/
+
 package com.gdakram.utils
 {
 	import com.adobe.serialization.json.JSON;

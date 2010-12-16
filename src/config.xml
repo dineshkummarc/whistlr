@@ -5,11 +5,6 @@
 		   - If you don't have it, visit: http://www.last.fm/api/account
 		   -->
 		<key service="lfm"></key>
-		<!-- 
-		   - Fill in your tra.kz web service api key
-		   - If you don't have it, contact http://twitter.com/ljharb 
-		   -->
-		<key service="trakz"></key>
 		<!--
 		   - Fill in your twiter oauth consumer key and consumer secret
 		   -

@@ -10,8 +10,7 @@
 			import mx.managers.CursorManager;
 			import com.gdakram.events.TweetEvent;
 			import com.gdakram.events.StatusMessageEvent;
-			import com.gdakram.events.UrlShortenerEvent;
-			import com.gdakram.utils.TrakzUrlShortener;
+			import com.gdakram.events.UrlShortenerEvent;			
 			import mx.controls.Image;
 			
 			/**
@@ -48,20 +47,10 @@
 			 * Shorten the track url if you user decides to tweet this track
 			 */
 			private function shortenUrl(event:MouseEvent):void {
-				var trakzUrlShortener:TrakzUrlShortener = new TrakzUrlShortener(this.track.url);
-				trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, tweet);
-				// In case trakz bails on us, we'll go with is.gd for shortening
-				trakzUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENING_ERROR, isgdUrlShortenerHandler);
-				trakzUrlShortener.shorten();
-				CursorManager.setBusyCursor();
-			}
-
-			/**
-			 * A backup shortener in case tra.kz bails
-			 */ 
-			private function isgdUrlShortenerHandler(event:UrlShortenerEvent):void {
 				var isgdUrlShortener:IsGdUrlShortener = new IsGdUrlShortener(this.track.url);
 				isgdUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENED, tweet);
+				// @todo -- add some error handler 
+				// isgdUrlShortener.addEventListener(UrlShortenerEvent.URL_SHORTENING_ERROR, isgdUrlShortenerHandler);				
 				isgdUrlShortener.shorten();
 				CursorManager.setBusyCursor();
 			}

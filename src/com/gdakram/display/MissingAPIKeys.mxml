@@ -15,7 +15,11 @@
 						 
 			private function init(event:Event):void {
 				lfmAPIKeyMissingBox.visible = ConfigurationManager.getLastfmAPIKey().length == 0 ? true : false;
-				trakzAPIKeyMissingBox.visible = ConfigurationManager.getTrakzAPIKey().length == 0 ? true : false;
+				if (ConfigurationManager.getTwitterConsumerKey().length == 0 || ConfigurationManager.getTwitterConsumerSecret().length == 0) {
+					twitterKeysMissingBox.visible = true;
+				} else {
+					twitterKeysMissingBox.visible = false;
+				}
 			}
 		]]>
 	</mx:Script>
@@ -24,8 +28,8 @@
 		<mx:VBox width="100%" id="lfmAPIKeyMissingBox" visible="false">
 			<mx:Label styleName="normal" text="* {resourceManager.getString('resources','MISSING_LFM_API_KEY_MSG')}"/>
 		</mx:VBox>
-		<mx:VBox width="100%" id="trakzAPIKeyMissingBox" visible="false">
-			<mx:Label styleName="normal" text="* {resourceManager.getString('resources','MISSING_TRAKZ_API_KEY_MSG')}"/>
+		<mx:VBox width="100%" id="twitterKeysMissingBox" visible="false">
+			<mx:Label styleName="normal" text="* {resourceManager.getString('resources','MISSING_TWITTER_API_KEY_MSG')}"/>
 		</mx:VBox>		
 	</mx:VBox>
 	

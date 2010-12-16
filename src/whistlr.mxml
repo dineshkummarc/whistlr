@@ -39,7 +39,6 @@
 		private function foundAPIKeys():Boolean {
 			// Checks for API keys for last.fm, trakz, twitter OAuth
 			if ((ConfigurationManager.getLastfmAPIKey().length == 0) 
-				|| (ConfigurationManager.getTrakzAPIKey().length == 0)
 				|| (ConfigurationManager.getTwitterConsumerKey().length == 0)
 				|| (ConfigurationManager.getTwitterConsumerSecret().length == 0)) {
 				this.currentState = AppStateChangeEvent.API_KEYS_MISSING_ERROR;
