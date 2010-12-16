@@ -28,7 +28,7 @@ package com.gdakram.utils
 			var loader:URLLoader = URLLoader(event.target);
 			var result:Object = JSON.decode(loader.data);
 
-			if (result.y == 1) {
+			if (result.y == 1 && result.s != false) {
 				var shortUrl:String = "http://tra.kz/" + result.s;
 				this.dispatchEvent(new UrlShortenerEvent(UrlShortenerEvent.URL_SHORTENED, true, false, shortUrl));
 				this.dispatchEvent(new StatusMessageEvent(StatusMessageEvent.UPDATE_STATUS, true, false, ResourceManager.getInstance().getString("resources","LINK_SHORTENED_MSG")));				
